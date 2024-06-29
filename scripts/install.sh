@@ -5,37 +5,58 @@ if (( $EUID > 0 )); then
 	exit
 fi
 
-#Install ROS 2
-echo " - Installing ROS 2 Foxy"
+#Install ROS 2 Humble
+echo " - Installing ROS 2 Humble"
 
 echo " - Install Build Tools"
 
 # C++ Build tools
 apt install build-essential gdb
 
-# Set UTF-8 charset
-apt update
-apt install -y locales
-locale-gen en_US en_US.UTF-8
-update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
-export LANG=en_US.UTF-8
+# Check if LANG contains UTF-8
+if [[ "$LANG" == *"UTF-8"* ]]; then
+  echo "UTF-8 charset is already, doing nothing."
+else
+  read -p "UTF-8 charset is not been set. Choose language (EN/JP): " choice
+  case "$choice" in
+    EN)
+	  apt update
+	  apt install -y locales
+	  locale-gen en_US en_US.UTF-8
+	  update-locale LANG=en_US.UTF-8
+	  source /etc/default/locale
+	  echo "Set LANG=en_US.UTF-8"
+	  ;;
+	JP)
+	  apt update
+	  apt install -y language-pack-ja-base language-pack-ja
+	  update-locale LANG=ja_JP.UTF-8
+	  source /etc/default/locale
+	  echo "Set LANG=ja_JP.UTF-8"
+	  ;;
+	*)
+	  echo "Invalid choice. Exiting."
+	  exit 1
+	  ;;
+  esac
+fi
 
 echo " - ROS 2 sources"
 
 # Add ROS2 sources
 apt update
-apt install -y curl gnupg2 lsb-release
-curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add -
-sh -c 'echo "deb [arch=$(dpkg --print-architecture)] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" > /etc/apt/sources.list.d/ros2-latest.list'
+apt install -y curl
+sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
 
 echo " - Install ROS 2"
 
-# Install ROS 2 (foxy)
+# Install ROS 2 (humble)
 apt update
-apt install -y ros-foxy-desktop
+apt install -y ros-humble-desktop
 
 # Step envrioment
-source /opt/ros/foxy/setup.bash
+source /opt/ros/humble/setup.bash
 
 echo " - Install Python ROS 2"
 
@@ -52,18 +73,18 @@ rosdep fix-permissions
 
 # Add to bashrc
 echo " - Register ROS 2 in .bashrc"
-echo "source /opt/ros/foxy/setup.bash" >> ~/.bashrc
-echo "source /usr/share/colcon_cd/function/colcon_cd.sh" >> ~/.bashrc
-echo "export _colcon_cd_root=~/ros2_install" >> ~/.bashrc
+grep -qxF 'source /opt/ros/humble/setup.bash' ~/.bashrc || echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
+grep -qxF 'source /usr/share/colcon_cd/function/colcon_cd.sh' ~/.bashrc || echo "source /usr/share/colcon_cd/function/colcon_cd.sh" >> ~/.bashrc
+grep -qxF 'export _colcon_cd_root=~/ros2_install' ~/.bashrc || echo "export _colcon_cd_root=~/ros2_install" >> ~/.bashrc
 source ~/.bashrc
 
 # Install project dependencies
 echo " - Python dependencies"
 pip3 install catkin_pkg rospkg av image opencv-python djitellopy2 pyyaml
-apt install python3-tf*
+apt install -y python3-tf*
 
 echo " - CPP dependencies"
-apt install ros-foxy-ament-cmake* ros-foxy-tf2* ros-foxy-rclcpp* ros-foxy-rosgraph*
+apt install -y ros-humble-ament-cmake* ros-humble-tf2* ros-humble-rclcpp* ros-humble-rosgraph*
 
 echo " - Rviz and RQT Tools"
-apt install ros-foxy-rviz* ros-foxy-rqt*
+apt install -y ros-humble-rviz* ros-humble-rqt*
