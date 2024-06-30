@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if (( $EUID > 0 )); then
-	echo " - Please run as root"
+if (( $EUID == 0 )); then
+	echo " - Please do NOT run as root"
 	exit
 fi
 
@@ -11,7 +11,7 @@ echo " - Installing ROS 2 Humble"
 echo " - Install Build Tools"
 
 # C++ Build tools
-apt install build-essential gdb
+sudo apt install build-essential gdb
 
 # Check if LANG contains UTF-8
 if [[ "$LANG" == *"UTF-8"* ]]; then
@@ -20,17 +20,17 @@ else
   read -p "UTF-8 charset is not been set. Choose language (EN/JP): " choice
   case "$choice" in
     EN)
-	  apt update
-	  apt install -y locales
-	  locale-gen en_US en_US.UTF-8
-	  update-locale LANG=en_US.UTF-8
+	  sudo apt update
+	  sudo apt install -y locales
+	  sudo locale-gen en_US en_US.UTF-8
+	  sudo update-locale LANG=en_US.UTF-8
 	  source /etc/default/locale
 	  echo "Set LANG=en_US.UTF-8"
 	  ;;
 	JP)
-	  apt update
-	  apt install -y language-pack-ja-base language-pack-ja
-	  update-locale LANG=ja_JP.UTF-8
+	  sudo apt update
+	  sudo apt install -y language-pack-ja-base language-pack-ja
+	  sudo update-locale LANG=ja_JP.UTF-8
 	  source /etc/default/locale
 	  echo "Set LANG=ja_JP.UTF-8"
 	  ;;
@@ -44,16 +44,16 @@ fi
 echo " - ROS 2 sources"
 
 # Add ROS2 sources
-apt update
-apt install -y curl
+sudo apt update
+sudo apt install -y curl
 sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
 
 echo " - Install ROS 2"
 
 # Install ROS 2 (humble)
-apt update
-apt install -y ros-humble-desktop
+sudo apt update
+sudo apt install -y ros-humble-desktop
 
 # Step envrioment
 source /opt/ros/humble/setup.bash
@@ -61,11 +61,11 @@ source /opt/ros/humble/setup.bash
 echo " - Install Python ROS 2"
 
 # Argcomplete
-apt install -y python3-pip
+sudo apt install -y python3-pip
 pip3 install -U argcomplete
 
 # Colcon build tools
-apt install -y python3-colcon-common-extensions python3-rosdep2
+sudo apt install -y python3-colcon-common-extensions python3-rosdep2
 
 # Update ROS dep
 rosdep update
@@ -81,10 +81,10 @@ source ~/.bashrc
 # Install project dependencies
 echo " - Python dependencies"
 pip3 install catkin_pkg rospkg av image opencv-python djitellopy2 pyyaml
-apt install -y python3-tf*
+sudo apt install -y python3-tf*
 
 echo " - CPP dependencies"
-apt install -y ros-humble-ament-cmake* ros-humble-tf2* ros-humble-rclcpp* ros-humble-rosgraph*
+sudo apt install -y ros-humble-ament-cmake* ros-humble-tf2* ros-humble-rclcpp* ros-humble-rosgraph*
 
 echo " - Rviz and RQT Tools"
-apt install -y ros-humble-rviz* ros-humble-rqt*
+sudo apt install -y ros-humble-rviz* ros-humble-rqt*
